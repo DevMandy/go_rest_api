@@ -50,7 +50,7 @@ stage('Deploy to Joyent') {
 
 	node {
 	    sh '''eval "$(triton env)"
-        docker run -d --name go_test -p 8123:8123 homepay/hello_rest:latest'''
+        docker run -d --name hello_rest -p 8123:8123 homepay/hello_rest:latest'''
 	}
 
 }
