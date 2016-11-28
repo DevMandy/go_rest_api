@@ -7,7 +7,7 @@ RUN apk add --update \
     bash \
 rm -rf /var/cache/apk/*
 
-COPY ./hello_rest /go/bin/
+COPY ../bin/golang_rest_seed hello_rest /go/bin/
 
 CMD /go/bin/hello_rest
 
