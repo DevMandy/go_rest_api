@@ -9,7 +9,6 @@ Make sure Go is installed and your `PATH` variable contains `%GOPATH%/bin`
 ### Jenkins Build
 This project is intended to be built and deployed using the Jenkinsfile.
 
-In Jenkins
 1.  Select `New Item` to create a new job
 2.  Enter a name and select Pipeline as the project type
 3.  Check the box next to GitHub project on the General tab
