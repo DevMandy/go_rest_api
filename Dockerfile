@@ -9,7 +9,7 @@ rm -rf /var/cache/apk/*
 
 COPY ../bin/golang_rest_seed /go/bin/
 
-CMD /go/bin/hello_rest
+CMD /go/bin/golang_rest_seed
 
 EXPOSE 8123
 
