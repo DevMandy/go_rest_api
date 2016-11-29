@@ -7,7 +7,7 @@ RUN apk add --update \
     bash \
 rm -rf /var/cache/apk/*
 
-COPY ../bin/golang_rest_seed /go/bin/
+COPY ../../../../bin/golang_rest_seed /go/bin/
 
 CMD /go/bin/golang_rest_seed
 
