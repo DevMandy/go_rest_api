@@ -19,7 +19,7 @@ stage('Build source')
 		echo $JENKINS_HOME
 		ssh-add $JENKINS_HOME/.ssh/id_rsa_jenkins
 		ssh-keyscan github.com >> /$JENKINS_HOME/.ssh/known_hosts
-		export GOPATH="$JENKINS_HOME/workspace/golang_rest_seed"
+		export GOPATH="$JENKINS_HOME/workspace/golang_rest_seed_local_deploy"
 		export GOBIN="$GOPATH/bin"
 
 		go get -v github.com/MyHomePay/golang_rest_seed
