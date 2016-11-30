@@ -25,7 +25,7 @@ stage('Build source')
 		go get -v github.com/MyHomePay/golang_rest_seed
         go build -v github.com/MyHomePay/golang_rest_seed
 
-        mv $JENKINS_HOME/workspace/golang_rest_seed/golang_rest_seed $JENKINS_HOME/workspace/golang_rest_seed/src/github.com/MyHomePay/golang_rest_seed/
+        mv $JENKINS_HOME/workspace/golang_rest_seed_local_deploy/golang_rest_seed $JENKINS_HOME/workspace/golang_rest_seed_local_deploy/src/github.com/MyHomePay/golang_rest_seed/
         '''
 
     }
