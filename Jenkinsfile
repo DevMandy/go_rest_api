@@ -19,13 +19,13 @@ stage('Build source')
 		echo $JENKINS_HOME
 		ssh-add $JENKINS_HOME/.ssh/id_rsa_jenkins
 		ssh-keyscan github.com >> /$JENKINS_HOME/.ssh/known_hosts
-		export GOPATH="$JENKINS_HOME/workspace/golang_rest_seed"
+		export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
 		export GOBIN="$GOPATH/bin"
 
 		go get -v github.com/MyHomePay/golang_rest_seed
         go build -v github.com/MyHomePay/golang_rest_seed
 
-        mv $JENKINS_HOME/workspace/golang_rest_seed/golang_rest_seed $JENKINS_HOME/workspace/golang_rest_seed/src/github.com/MyHomePay/golang_rest_seed/
+        mv $JENKINS_HOME/workspace/$JOB_NAME/golang_rest_seed $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/MyHomePay/golang_rest_seed/
         '''
 
     }
@@ -34,7 +34,7 @@ stage('Build source')
 stage('Run tests') {
 
     node {
-        sh '''cd $JENKINS_HOME/workspace/golang_rest_seed/src/github.com/MyHomePay/golang_rest_seed
+        sh '''cd $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/MyHomePay/golang_rest_seed
         go test'''
 
     }
