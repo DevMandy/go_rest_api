@@ -12,4 +12,9 @@ var _ = Describe("GolangRestSeed", func() {
 
 	})
 
+	It("should fail", func() {
+		Expect(false).Should(BeTrue())
+
+	})
+
 })
