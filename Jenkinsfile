@@ -64,6 +64,7 @@ docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
 	stage('Push image to Docker Hub') {
 		echo "Pushing image to Docker Hub"
 
+        input message: 'Are you ready to deploy to Joyent?', ok: 'Hell yeah!'
 		image.push();
 		image.push('latest');
 		}
