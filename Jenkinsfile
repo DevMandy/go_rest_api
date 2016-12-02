@@ -34,8 +34,13 @@ stage('Build source')
 stage('Run tests') {
 
     node {
-        sh '''cd $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/MyHomePay/golang_rest_seed
-        go test'''
+
+        sh '''
+        go get github.com/onsi/ginkgo/ginkgo
+        go get github.com/onsi/gomega
+        cd $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/MyHomePay/golang_rest_seed
+        go test
+        '''
 
     }
 }
@@ -63,7 +68,10 @@ docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
 stage('Deploy to Joyent') {
 
 	node {
-	    sh '''eval "$(triton env)"
+	    sh '''
+	    set -x
+	    eval "$(triton env)"
+	    docker info
         docker run -d --name golang_rest_seed -p 8123:8123 homepay/golang_rest_seed:latest'''
 	}
 
