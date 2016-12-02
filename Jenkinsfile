@@ -72,11 +72,11 @@ docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
 stage('Deploy to Joyent') {
 
 	node {
+	    input message: 'Are you ready to deploy to Joyent?', ok: 'Hell yeah!'
 	    sh '''
 	    set -x
 	    eval "$(triton env)"
 	    docker info
-	    input message: 'Are you ready to deploy to Joyent?', ok: 'Hell yeah!'
         docker run -d --name golang_rest_seed -p 8123:8123 homepay/golang_rest_seed:latest'''
 	}
 
