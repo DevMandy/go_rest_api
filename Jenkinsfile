@@ -75,6 +75,7 @@ stage('Deploy to Joyent') {
 	    input message: 'Are you ready to deploy to Joyent?', ok: 'Hell yeah!'
 	    sh '''
 	    set -x
+	    triton profile list
 	    eval "$(triton env)"
 	    docker info
         docker run -d --name golang_rest_seed -p 8123:8123 homepay/golang_rest_seed:latest'''
