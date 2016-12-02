@@ -22,6 +22,8 @@ stage('Build source')
 		export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
 		export GOBIN="$GOPATH/bin"
 
+		go get github.com/onsi/ginkgo/ginkgo
+        go get github.com/onsi/gomega
 
 		go get -v github.com/MyHomePay/golang_rest_seed
         go build -v github.com/MyHomePay/golang_rest_seed
@@ -32,7 +34,20 @@ stage('Build source')
     }
 }
 
+stage('Run tests') {
 
+    node {
+
+        sh '''
+        export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
+        export GOBIN="$GOPATH/bin"
+        echo $GOPATH
+        cd $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/MyHomePay/golang_rest_seed
+        go test
+        '''
+
+    }
+}
 
 docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
 
