@@ -39,7 +39,8 @@ stage('Run tests') {
     node {
 
         sh '''
-
+        export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
+        export GOBIN="$GOPATH/bin"
         cd $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/MyHomePay/golang_rest_seed
         go test
         '''
