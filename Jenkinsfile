@@ -22,8 +22,6 @@ stage('Build source')
 		export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
 		export GOBIN="$GOPATH/bin"
 
-		go get github.com/onsi/ginkgo/ginkgo
-        go get github.com/onsi/gomega
 
 		go get -v github.com/MyHomePay/golang_rest_seed
         go build -v github.com/MyHomePay/golang_rest_seed
