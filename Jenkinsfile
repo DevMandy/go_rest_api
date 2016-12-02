@@ -74,7 +74,7 @@ stage('Deploy to Joyent') {
 	node {
 	    input message: 'Are you ready to deploy to Joyent?', ok: 'Hell yeah!'
 	    sh '''
-	    eval "$(triton env us-sw-1)"
+	     eval "$(triton env --docker us-sw-1)"
 	    set -x
 	    triton profile list
 	    docker info
