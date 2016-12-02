@@ -76,7 +76,7 @@ stage('Deploy to Joyent') {
 	    sh '''
 	    set -x
 	    triton profile list
-	    eval "$(triton env)"
+	    eval "$(triton env us-sw-1)"
 	    docker info
         docker run -d --name golang_rest_seed -p 8123:8123 homepay/golang_rest_seed:latest'''
 	}
