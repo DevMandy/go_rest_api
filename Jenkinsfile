@@ -70,7 +70,7 @@ docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
 stage('Deploy to Joyent') {
 
 	node {
-	    input message: 'Are you ready to deploy to Joyent?', ok: 'Hell yeah!'
+	    input message: 'Are you ready to deploy to Joyent?', ok: 'OK'
 
 	    try {
             sh '''
