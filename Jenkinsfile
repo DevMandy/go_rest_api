@@ -19,13 +19,14 @@ stage('Build source')
 		echo $JENKINS_HOME
 		ssh-add $JENKINS_HOME/.ssh/id_rsa_jenkins
 		ssh-keyscan github.com >> /$JENKINS_HOME/.ssh/known_hosts
-		export GOPATH="$JENKINS_HOME/workspace/golang_rest_seed"
+		export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
 		export GOBIN="$GOPATH/bin"
 
-		go get -v github.com/MyHomePay/golang_rest_seed
-        go build -v github.com/MyHomePay/golang_rest_seed
+		go get github.com/onsi/ginkgo/ginkgo
+        go get github.com/onsi/gomega
 
-        mv $JENKINS_HOME/workspace/golang_rest_seed/golang_rest_seed $JENKINS_HOME/workspace/golang_rest_seed/src/github.com/MyHomePay/golang_rest_seed/
+		go get -v github.com/myhomepay/golang_rest_seed
+        go build -v github.com/myhomepay/golang_rest_seed
         '''
 
     }
@@ -34,8 +35,14 @@ stage('Build source')
 stage('Run tests') {
 
     node {
-        sh '''cd $JENKINS_HOME/workspace/golang_rest_seed/src/github.com/MyHomePay/golang_rest_seed
-        go test'''
+
+        sh '''
+        export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
+        export GOBIN="$GOPATH/bin"
+        echo $GOPATH
+        cd $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/myhomepay/golang_rest_seed
+        go test
+        '''
 
     }
 }
@@ -46,7 +53,7 @@ docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
 	    echo pwd()
 		echo "Building docker image"
 
-		dir('src/github.com/MyHomePay/golang_rest_seed') {
+		dir('src/github.com/myhomepay/golang_rest_seed') {
             image = docker.build("${imageName}:${imageTag}")
         }
 
@@ -63,8 +70,48 @@ docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
 stage('Deploy to Joyent') {
 
 	node {
-	    sh '''eval "$(triton env)"
-        docker run -d --name golang_rest_seed -p 8123:8123 homepay/golang_rest_seed:latest'''
+	    input message: 'Are you ready to deploy to Joyent?', ok: 'OK'
+
+	    try {
+            sh '''
+                eval "$(triton env --docker us-sw-1)"
+                set -x
+                triton profile list
+                docker info
+                docker stop golang_rest_seed
+            '''
+
+        } catch(e) {
+
+            echo "Error stopping container: ${e}"
+        }
+
+         try {
+            sh '''
+                eval "$(triton env --docker us-sw-1)"
+                set -x
+                triton profile list
+                docker info
+                docker rm golang_rest_seed
+            '''
+
+        } catch(e) {
+
+            echo "Error removing container: ${e}"
+        }
+
+	    try {
+            sh '''
+                 eval "$(triton env --docker us-sw-1)"
+                set -x
+                triton profile list
+                docker info
+                docker run -d --name golang_rest_seed -p 8123:8123 homepay/golang_rest_seed:latest
+            '''
+        } catch(e) {
+
+            echo "Error deploying to Joyent: ${e}"
+        }
 	}
 
 }
