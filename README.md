@@ -35,7 +35,5 @@ Execute `go build github.com/MyHomePay/hello_rest`
 Open `http://localhost:8123` in a web browser
 
 ### Test
+A ginkgo test is run by this build and produces a junit.xml file.
 
-
-
-Test pushing to fork
