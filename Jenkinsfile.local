@@ -71,16 +71,16 @@ docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
 		}
 }
 
-stage('Deploy to Joyent') {
+stage('Deploy to local Docker') {
 
 	node {
-	    input message: 'Are you ready to deploy to Joyent?', ok: 'OK'
+	    input message: 'Are you ready to deploy to your local Docker machine?', ok: 'OK'
 
 	    try {
             sh '''
 
                 set -x
-                triton profile list
+
                 docker info
                 docker stop golang_rest_seed
             '''
@@ -88,13 +88,14 @@ stage('Deploy to Joyent') {
         } catch(e) {
 
             echo "Error stopping container: ${e}"
+            echo "Error stopping container: ${e}"
         }
 
          try {
             sh '''
 
                 set -x
-                triton profile list
+
                 docker info
                 docker rm golang_rest_seed
             '''
@@ -108,7 +109,7 @@ stage('Deploy to Joyent') {
             sh '''
 
                 set -x
-                triton profile list
+
                 docker info
                 docker run -d --name golang_rest_seed -p 8123:8123 homepay/golang_rest_seed:latest
             '''
