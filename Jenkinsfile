@@ -7,13 +7,27 @@ def image
 
 stage('Build source')
 {
-    echo "Building"
-    node {
 
+    stage('Run tests') {
+
+        node {
+
+            sh '''
+            export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
+            export GOBIN="$GOPATH/bin"
+            echo $GOPATH
+            cd $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/MyHomePay/golang_rest_seed
+            go test
+            '''
+
+        }
+    }
+
+    node {
 
 		sh '''#!/bin/bash
 		set -x
-		pwd
+
 		cat $JENKINS_HOME/.gitconfig
 		eval "$(ssh-agent -s)"
 		echo $JENKINS_HOME
@@ -25,27 +39,16 @@ stage('Build source')
 		go get github.com/onsi/ginkgo/ginkgo
         go get github.com/onsi/gomega
 
-		go get -v github.com/myhomepay/golang_rest_seed
-        go build -v github.com/myhomepay/golang_rest_seed
+		go get -v github.com/MyHomePay/golang_rest_seed
+        go build -v github.com/MyHomePay/golang_rest_seed
+
+        mv $JENKINS_HOME/workspace/$JOB_NAME/golang_rest_seed $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/MyHomePay/golang_rest_seed/
         '''
 
     }
 }
 
-stage('Run tests') {
 
-    node {
-
-        sh '''
-        export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
-        export GOBIN="$GOPATH/bin"
-        echo $GOPATH
-        cd $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/myhomepay/golang_rest_seed
-        go test
-        '''
-
-    }
-}
 
 docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
 
@@ -53,7 +56,7 @@ docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
 	    echo pwd()
 		echo "Building docker image"
 
-		dir('src/github.com/myhomepay/golang_rest_seed') {
+		dir('src/github.com/MyHomePay/golang_rest_seed') {
             image = docker.build("${imageName}:${imageTag}")
         }
 
@@ -70,7 +73,7 @@ docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
 stage('Deploy to Joyent') {
 
 	node {
-	    input message: 'Are you ready to deploy to Joyent?', ok: 'OK'
+	    input message: 'Are you ready to deploy to Joyent?', ok: 'Hell yeah!'
 
 	    try {
             sh '''
@@ -102,7 +105,7 @@ stage('Deploy to Joyent') {
 
 	    try {
             sh '''
-                 eval "$(triton env --docker us-sw-1)"
+                eval "$(triton env --docker us-sw-1)"
                 set -x
                 triton profile list
                 docker info
