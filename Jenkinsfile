@@ -8,21 +8,6 @@ def image
 stage('Build source')
 {
 
-    stage('Run tests') {
-
-        node {
-
-            sh '''
-            export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
-            export GOBIN="$GOPATH/bin"
-            echo $GOPATH
-            cd $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/MyHomePay/golang_rest_seed
-            go test
-            '''
-
-        }
-    }
-
     node {
 
 		sh '''#!/bin/bash
@@ -48,6 +33,20 @@ stage('Build source')
     }
 }
 
+stage('Run tests') {
+
+        node {
+
+            sh '''
+            export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
+            export GOBIN="$GOPATH/bin"
+            echo $GOPATH
+            cd $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/MyHomePay/golang_rest_seed
+            go test
+            '''
+
+        }
+    }
 
 
 docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
@@ -73,7 +72,7 @@ docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
 stage('Deploy to Joyent') {
 
 	node {
-	    input message: 'Are you ready to deploy to Joyent?', ok: 'Hell yeah!'
+	    input message: 'Are you ready to deploy to Joyent?', ok: 'OK'
 
 	    try {
             sh '''
