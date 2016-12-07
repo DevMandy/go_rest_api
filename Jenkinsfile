@@ -4,6 +4,29 @@ def imageTag = "build-${env.BUILD_NUMBER}"
 def imageName = 'homepay/golang_rest_seed'
 def image
 
+stage('Run unit tests') {
+
+        node {
+
+            sh '''
+            # Workaround to problem setting $GOPATH in Dockerfile for docker-jenkins
+            export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
+            export GOBIN="$GOPATH/bin"
+            echo $GOPATH
+
+            go get github.com/onsi/ginkgo/ginkgo
+            go get github.com/onsi/gomega
+
+            go get -v github.com/MyHomePay/golang_rest_seed
+            go build -v github.com/MyHomePay/golang_rest_seed
+
+            # Need to parameterize github path to facilitate using this to build a fork
+            cd $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/MyHomePay/golang_rest_seed
+            go test
+            '''
+
+        }
+    }
 
 stage('Build source')
 {
@@ -21,33 +44,13 @@ stage('Build source')
 		export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
 		export GOBIN="$GOPATH/bin"
 
-		go get github.com/onsi/ginkgo/ginkgo
-        go get github.com/onsi/gomega
 
-		go get -v github.com/MyHomePay/golang_rest_seed
-        go build -v github.com/MyHomePay/golang_rest_seed
-
+        # Need to parameterize github path to facilitate using this to build a fork
         mv $JENKINS_HOME/workspace/$JOB_NAME/golang_rest_seed $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/MyHomePay/golang_rest_seed/
         '''
 
     }
 }
-
-stage('Run tests') {
-
-        node {
-
-            sh '''
-            export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
-            export GOBIN="$GOPATH/bin"
-            echo $GOPATH
-            cd $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/MyHomePay/golang_rest_seed
-            go test
-            '''
-
-        }
-    }
-
 
 docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
 
@@ -55,6 +58,7 @@ docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
 	    echo pwd()
 		echo "Building docker image"
 
+        sh '# Need to parameterize github path to facilitate using this to build a fork'
 		dir('src/github.com/MyHomePay/golang_rest_seed') {
             image = docker.build("${imageName}:${imageTag}")
         }
