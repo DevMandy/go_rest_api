@@ -123,6 +123,3 @@ stage('Deploy to local Docker') {
 
 }
 
-stage('Notify') {
-    slackSend color: 'purple', message: "${imageName}:${imageTag} built and deployed to Joyent"
-}
