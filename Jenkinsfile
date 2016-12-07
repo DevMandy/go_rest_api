@@ -1,8 +1,10 @@
 #!groovy
 
 def imageTag = "build-${env.BUILD_NUMBER}"
-def imageName = 'homepay/golang_rest_seed'
+def imageName = '$DOCKER_REPO/golang_rest_seed'
 def image
+
+
 
 stage('Run unit tests') {
 
@@ -17,11 +19,10 @@ stage('Run unit tests') {
             go get github.com/onsi/ginkgo/ginkgo
             go get github.com/onsi/gomega
 
-            go get -v github.com/MyHomePay/golang_rest_seed
-            go build -v github.com/MyHomePay/golang_rest_seed
+            go get -v github.com/$GITHUB_REPO/golang_rest_seed
+            go build -v github.com/$GITHUB_REPO/golang_rest_seed
 
-            # Need to parameterize github path to facilitate using this to build a fork
-            cd $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/MyHomePay/golang_rest_seed
+            cd $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/$GITHUB_REPO/golang_rest_seed
             go test
             '''
 
@@ -44,9 +45,7 @@ stage('Build source')
 		export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
 		export GOBIN="$GOPATH/bin"
 
-
-        # Need to parameterize github path to facilitate using this to build a fork
-        mv $JENKINS_HOME/workspace/$JOB_NAME/golang_rest_seed $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/MyHomePay/golang_rest_seed/
+        mv $JENKINS_HOME/workspace/$JOB_NAME/golang_rest_seed $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/$GITHUB_REPO/golang_rest_seed/
         '''
 
     }
@@ -58,8 +57,7 @@ docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
 	    echo pwd()
 		echo "Building docker image"
 
-        sh '# Need to parameterize github path to facilitate using this to build a fork'
-		dir('src/github.com/MyHomePay/golang_rest_seed') {
+		dir("src/github.com/$GITHUB_REPO/golang_rest_seed") {
             image = docker.build("${imageName}:${imageTag}")
         }
 
@@ -112,7 +110,7 @@ stage('Deploy to Joyent') {
                 set -x
                 triton profile list
                 docker info
-                docker run -d --name golang_rest_seed -p 8123:8123 homepay/golang_rest_seed:latest
+                docker run -d --name golang_rest_seed -p 8123:8123 $DOCKER_REPO/golang_rest_seed:latest
             '''
         } catch(e) {
 
