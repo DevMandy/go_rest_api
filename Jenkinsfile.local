@@ -1,7 +1,7 @@
 #!groovy
 
 def imageTag = "build-${env.BUILD_NUMBER}"
-def imageName = '$DOCKER_REPO/golang_rest_seed'
+def imageName = "${DOCKER_REPO}/golang_rest_seed"
 def image
 
 
