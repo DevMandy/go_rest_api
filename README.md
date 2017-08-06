@@ -37,3 +37,5 @@ Open `http://localhost:8123` in a web browser
 ### Test
 A ginkgo test is run by this build and produces a junit.xml file.
 
+# golang_rest_api
+golang_rest_api
