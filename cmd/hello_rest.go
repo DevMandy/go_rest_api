@@ -7,7 +7,7 @@ import (
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-    fmt.Fprintf(w, "{ \"message\" : \"Hello, World\"}")
+    fmt.Fprintf(w, "{ \"message\" : \"Hello, Jenkins World\"}")
 }
 
 func main() {
