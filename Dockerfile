@@ -7,9 +7,11 @@ RUN apk add --update \
     bash \
 rm -rf /var/cache/apk/*
 
-COPY golang_rest_seed /go/bin/
+RUN pwd
+RUN ls -al
+COPY cmd/golang_rest_api /go/bin/
 
-CMD /go/bin/golang_rest_seed
+CMD /go/bin/golang_rest_api
 
 EXPOSE 8123
 
