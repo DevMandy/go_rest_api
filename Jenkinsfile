@@ -13,6 +13,7 @@ def tagComment
 
 node("master") {
 
+    privateKey = env.PRIVATE_KEY
     github = new GithubModel(env)
     dockerModel = new DockerModel(env)
     tagger = new TaggerModel(env)
@@ -118,8 +119,55 @@ node("master") {
                 dockerPush(dockerModel, tag, "latest")
             }
         }
-    }
-    else{
+
+
+
+        stage('Deploy to Production') {
+
+                input message: 'Authorization required: Deploy to production?', ok: 'OK'
+
+                try {
+
+                    configureTestEnv(props, env)
+                    dockerDeploy("devmandy/golang_rest_api", "8123")
+
+                } catch(e) {
+
+                    echo "Error stopping container: ${e}"
+                }
+
+//                try {
+//                    sh '''
+//                eval "$(triton env --docker us-sw-1)"
+//                set -x
+//                triton profile list
+//                docker info
+//                docker rm golang_rest_seed
+//            '''
+//
+//                } catch(e) {
+//
+//                    echo "Error removing container: ${e}"
+//                }
+//
+//                try {
+//                    sh '''
+//                eval "$(triton env --docker us-sw-1)"
+//                set -x
+//                triton profile list
+//                docker info
+//                docker run -d --name ${repo} -p 8123:8123 ${docker_repo}/${repo}:latest
+//            '''
+//                } catch(e) {
+//
+//                    echo "Error deploying to Joyent: ${e}"
+//                }
+            }
+
+
+        }
+
+        else{
         echo "Not pushing ${dockerModel.getImageName()} for ${branch} to docker hub because it is not a master branch."
     }
 
