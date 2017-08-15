@@ -49,19 +49,6 @@ node("master") {
 
                 echo "Run Tests"
 
-                sh '''
-
-                set -x
-
-                # ssh setup for git
-                eval "$(ssh-agent -s)"
-                ssh-add /var/jenkins_home/.ssh/triton
-                mkdir -p ~/.ssh
-                ssh-keyscan -H -t rsa github.com  >> ~/.ssh/known_hosts
-                git config --global url."git@github.com:".insteadOf "https://github.com/"
-
-                '''
-
                 git branch: branch, credentialsId: "github", url: "git@github.com:devmandy/golang_rest_api.git"
 
                 try {
@@ -83,9 +70,7 @@ node("master") {
                 echo "Build"
 
                 goBuild(env)
-
             }
-
         }
 
         stage("Build Docker Image") {
@@ -127,6 +112,7 @@ node("master") {
 
     else{
         echo "Not pushing ${dockerModel.getImageName()} for ${branch} to docker hub because it is not a master branch."
+        slackSend channel: "${env.SLACK_CHANNEL}", color: '#FF0000', message: "PR for ${env.GITHUB_REPO} passed quality checks.  Safe to squash and merge.", token: "${SLACK_TOKEN}"
     }
 
     if(isRelease) {
