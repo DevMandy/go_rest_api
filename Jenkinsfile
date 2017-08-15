@@ -127,7 +127,7 @@ node("master") {
             try {
 
                 configureTestEnv(env)
-                dockerDeploy(props, "devmandy/golang_rest_api", "8123")
+                dockerDeploy(env, "devmandy/golang_rest_api", "8123")
 
             } catch(e) {
 
