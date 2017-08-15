@@ -2,9 +2,6 @@
 @Library('jenkins-library') _
 
 env.GITHUB_REPO = "golang_rest_api"
-env.DOCKER_REPO = "devmandy"
-env.COMPOSE_PROJECT_NAME="golang_rest_api"
-def repo="golang_rest_api"
 
 def github
 def dockerModel
@@ -43,8 +40,8 @@ node("master") {
 
     def tag = isRelease ? tagger.getTag() : getSemver(branch)
 
-    def ginkgo = docker.image("${docker_repo}/ginkgo:latest")
-    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
+    def ginkgo = docker.image("${env.DOCKERHUB_ORGANIZATION}/ginkgo:latest")
+    docker.withRegistry('https://index.docker.io/v1/', "${DOCKERHUB_CREDENTIALS_ID}") {
         ginkgo.inside {
 
             stage("Run Tests") {
@@ -68,13 +65,9 @@ node("master") {
 
                 try {
                     currentBuild.result = 'SUCCESS'
-                    sh """
-						cd cmd 
-                        ls -al                       
-						go test -o ${repo} ./...
 
+                    goTest(env)
 
-                    """
                 } catch (e) {
                     step([$class: 'JUnitResultArchiver', testResults: '**/*.xml'])
                     echo "ERROR ${e}"
@@ -92,7 +85,7 @@ node("master") {
                 pwd
                 cd cmd
                 
-				go build -o ${repo} ./...
+				go build -o $env.GITHUB_REPO} ./...
                 
                 """
 
@@ -127,7 +120,7 @@ node("master") {
             try {
 
                 configureTestEnv(env)
-                dockerDeploy(env, "devmandy/golang_rest_api", "8123")
+                dockerDeploy(env, "${DOCKERHUB_ORGANIZATION}/${env.GITHUB_REPO}", "8123")
 
             } catch(e) {
 
