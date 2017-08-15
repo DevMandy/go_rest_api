@@ -1,7 +1,8 @@
 #!groovy
 @Library('jenkins-library') _
 
-env.GITHUB_REPO = "golang_rest_api"
+env.GITHUB_REPO="golang_rest_api"
+env.PORT="8123"
 
 def github
 def dockerModel
@@ -71,7 +72,7 @@ node("master") {
                 } catch (e) {
                     step([$class: 'JUnitResultArchiver', testResults: '**/*.xml'])
                     echo "ERROR ${e}"
-                    //slackSend channel: '#platform-builds', color: '#FF0000', message: "Unit tests failed.", token: 'slack3'
+                    slackSend channel: "${env.SLACK_CHANNEL}", color: '#FF0000', message: "Unit tests have failed for ${env.GITHUB_REPO}", token: "${SLACK_TOKEN}"
                     currentBuild.result = 'FAILURE'
                     throw e
                 }
@@ -81,13 +82,7 @@ node("master") {
 
                 echo "Build"
 
-                sh """
-                pwd
-                cd cmd
-                
-				go build -o $env.GITHUB_REPO} ./...
-                
-                """
+                goBuild(env)
 
             }
 
@@ -115,12 +110,13 @@ node("master") {
 
         stage('Deploy to Production') {
 
+            slackSend channel: "${env.SLACK_CHANNEL}", color: '#FF0000', message: "Jenkins is waiting for authorization to deploy ${env.GITHUB_REPO} to production.", token: "${SLACK_TOKEN}"
             input message: 'Authorization required: Deploy to production?', ok: 'OK'
 
             try {
 
                 configureTestEnv(env)
-                dockerDeploy(env, "${DOCKERHUB_ORGANIZATION}/${env.GITHUB_REPO}", "8123")
+                dockerDeploy(env, "${DOCKERHUB_ORGANIZATION}/${env.GITHUB_REPO}", "${env.PORT}")
 
             } catch(e) {
 
