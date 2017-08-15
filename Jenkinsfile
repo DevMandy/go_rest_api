@@ -1,125 +1,147 @@
 #!groovy
+@Library('jenkins-library') _
 
-def imageTag = "build-${env.BUILD_NUMBER}"
-def imageName = "${DOCKER_REPO}/golang_rest_seed"
-def image
+env.GITHUB_REPO = "golang_rest_api"
+env.DOCKER_REPO = "devmandy"
+def repo="golang_rest_api"
+
+def github
+def dockerModel
+def tagger
+def imageName
+def tagComment
+
+node("master") {
+
+    privateKey = env.PRIVATE_KEY
+    github = new GithubModel(env)
+    dockerModel = new DockerModel(env)
+    tagger = new TaggerModel(env)
+    tagger.setMessage(params.comment)
+
+    def isRelease = isReleaseBranchSet(params)
+    def branch = isRelease ? params.releaseBranch : env.BRANCH_NAME
+    def pushToDocker = isRelease || branch == "master"
+    def isPullRequest = !pushToDocker
+
+    stage("Checkout") {
+        if(isPullRequest) {
+            echo "Building a PR or non-master branch that is not a release"
+            checkout scm
+        } else {
+            echo "Doing a release or building master"
+            git branch: branch, credentialsId: github.credentialsId, url: "git@github.com:${github.getOrganization()}/${github.getRepo()}.git"
+        }
+        github.setCommit(getGitCommit())
+        tagger.setTag(getVersion())
+    }
+
+    stage("Tag Generation") {
+        isGithubTagAvailable(isRelease, github, tagger)
+    }
+
+    def tag = isRelease ? tagger.getTag() : getSemver(branch)
+
+    def ginkgo = docker.image("${docker_repo}/ginkgo:latest")
+    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
+        ginkgo.inside {
+
+            stage("Run Tests") {
+
+                echo "Run Tests"
+
+                sh '''
+
+                set -x
+
+                # ssh setup for git
+                eval "$(ssh-agent -s)"
+                ssh-add /var/jenkins_home/.ssh/triton
+                mkdir -p ~/.ssh
+                ssh-keyscan -H -t rsa github.com  >> ~/.ssh/known_hosts
+                git config --global url."git@github.com:".insteadOf "https://github.com/"
+
+                '''
+
+                git branch: branch, credentialsId: "github", url: "git@github.com:devmandy/golang_rest_api.git"
+
+                try {
+                    currentBuild.result = 'SUCCESS'
+                    sh """
+						cd cmd                        
+						go test -o ${repo} ./...
 
 
+                    """
+                } catch (e) {
+                    step([$class: 'JUnitResultArchiver', testResults: '**/*.xml'])
+                    echo "ERROR ${e}"
+                    //slackSend channel: '#platform-builds', color: '#FF0000', message: "Unit tests failed.", token: 'slack3'
+                    currentBuild.result = 'FAILURE'
+                    throw e
+                }
+            }
 
-stage('Run unit tests') {
+            stage("Build") {
 
-        node {
+                echo "Build"
 
-            sh '''
-            # Workaround to problem setting $GOPATH in Dockerfile for docker-jenkins
-            export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
-            export GOBIN="$GOPATH/bin"
-            echo $GOPATH
+                sh """
+                pwd
+                cd cmd
+                
+				go build -o ${repo} ./...
+                
+                """
 
-            go get github.com/onsi/ginkgo/ginkgo
-            go get github.com/onsi/gomega
+            }
 
-            go get -v github.com/$GITHUB_REPO/golang_rest_seed
-            go build -v github.com/$GITHUB_REPO/golang_rest_seed
+        }
 
-            cd $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/$GITHUB_REPO/golang_rest_seed
-            go test
-            '''
+        stage("Build Docker Image") {
 
+            echo "Build Docker Image"
+
+            docker.withRegistry(dockerModel.getRegistry(), dockerModel.getCredentialsId()) {
+                configureBuildEnv(dockerModel)
+                dockerBuild(dockerModel, tag, "latest")
+
+            }
+        }
+
+    }
+
+    if(pushToDocker) {
+        stage("Push to Docker Hub") {
+            docker.withRegistry(dockerModel.getRegistry(), dockerModel.getCredentialsId()) {
+                dockerPush(dockerModel, tag, "latest")
+            }
+        }
+
+        stage('Deploy to Production') {
+
+            input message: 'Authorization required: Deploy to production?', ok: 'OK'
+
+            try {
+                props=getProperties("${env.WORKSPACE}/environment.env")
+                configureTestEnv(props, env)
+                dockerDeploy("devmandy/golang_rest_api", "8123")
+
+            } catch(e) {
+
+                echo "Error: ${e}"
+            }
         }
     }
 
-stage('Build source')
-{
-
-    node {
-
-		sh '''#!/bin/bash
-		set -x
-
-		cat $JENKINS_HOME/.gitconfig
-		eval "$(ssh-agent -s)"
-		echo $JENKINS_HOME
-		ssh-add $JENKINS_HOME/.ssh/id_rsa_jenkins
-		ssh-keyscan github.com >> /$JENKINS_HOME/.ssh/known_hosts
-		export GOPATH="$JENKINS_HOME/workspace/$JOB_NAME"
-		export GOBIN="$GOPATH/bin"
-
-        mv $JENKINS_HOME/workspace/$JOB_NAME/golang_rest_seed $JENKINS_HOME/workspace/$JOB_NAME/src/github.com/$GITHUB_REPO/golang_rest_seed/
-        '''
-
+    else{
+        echo "Not pushing ${dockerModel.getImageName()} for ${branch} to docker hub because it is not a master branch."
     }
-}
 
-docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
-
-	stage('Build Docker image') {
-	    echo pwd()
-		echo "Building docker image"
-
-		dir("src/github.com/$GITHUB_REPO/golang_rest_seed") {
-            image = docker.build("${imageName}:${imageTag}")
+    if(isRelease) {
+        stage("Tag Release in Github") {
+            tagGithubCommit(github, tagger)
         }
+    }
 
-	}
-
-	stage('Push image to Docker Hub') {
-		echo "Pushing image to Docker Hub"
-
-		image.push();
-		image.push('latest');
-		}
-}
-
-stage('Deploy to Joyent') {
-
-	node {
-	    input message: 'Are you ready to deploy to Joyent?', ok: 'OK'
-
-	    try {
-            sh '''
-                eval "$(triton env --docker us-sw-1)"
-                set -x
-                triton profile list
-                docker info
-                docker stop golang_rest_seed
-            '''
-
-        } catch(e) {
-
-            echo "Error stopping container: ${e}"
-        }
-
-         try {
-            sh '''
-                eval "$(triton env --docker us-sw-1)"
-                set -x
-                triton profile list
-                docker info
-                docker rm golang_rest_seed
-            '''
-
-        } catch(e) {
-
-            echo "Error removing container: ${e}"
-        }
-
-	    try {
-            sh '''
-                eval "$(triton env --docker us-sw-1)"
-                set -x
-                triton profile list
-                docker info
-                docker run -d --name golang_rest_seed -p 8123:8123 $DOCKER_REPO/golang_rest_seed:latest
-            '''
-        } catch(e) {
-
-            echo "Error deploying to Joyent: ${e}"
-        }
-	}
-
-}
-
-stage('Notify') {
-    slackSend color: 'purple', message: "${imageName}:${imageTag} built and deployed to Joyent"
 }
