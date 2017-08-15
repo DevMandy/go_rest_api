@@ -68,7 +68,8 @@ node("master") {
                 try {
                     currentBuild.result = 'SUCCESS'
                     sh """
-						cd cmd                        
+						cd cmd 
+                        ls -al                       
 						go test -o ${repo} ./...
 
 
@@ -124,8 +125,10 @@ node("master") {
 
             try {
                 props=getProperties("${env.WORKSPACE}/environment.env")
+                props.setProperty("COMPOSE_PROJECT_NAME", "golang_rest_api")
+                props.setProperty("PRIVATE_KEY", privateKey)
                 configureTestEnv(props, env)
-                dockerDeploy("devmandy/golang_rest_api", "8123")
+                dockerDeploy(props, "devmandy/golang_rest_api", "8123")
 
             } catch(e) {
 
