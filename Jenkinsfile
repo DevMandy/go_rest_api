@@ -3,6 +3,7 @@
 
 env.GITHUB_REPO = "golang_rest_api"
 env.DOCKER_REPO = "devmandy"
+env.COMPOSE_PROJECT_NAME="golang_rest_api"
 def repo="golang_rest_api"
 
 def github
@@ -124,10 +125,8 @@ node("master") {
             input message: 'Authorization required: Deploy to production?', ok: 'OK'
 
             try {
-                props=getProperties("${env.WORKSPACE}/environment.env")
-                props.setProperty("COMPOSE_PROJECT_NAME", "golang_rest_api")
-                props.setProperty("PRIVATE_KEY", privateKey)
-                configureTestEnv(props, env)
+
+                configureTestEnv(env)
                 dockerDeploy(props, "devmandy/golang_rest_api", "8123")
 
             } catch(e) {
