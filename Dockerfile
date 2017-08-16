@@ -9,7 +9,7 @@ rm -rf /var/cache/apk/*
 
 RUN pwd
 RUN ls -al
-COPY cmd/golang_rest_api /go/bin/
+COPY golang_rest_api /go/bin/
 
 CMD /go/bin/golang_rest_api
 
