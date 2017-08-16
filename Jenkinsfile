@@ -49,8 +49,6 @@ node("master") {
 
                 echo "Run Tests"
 
-                git branch: branch, credentialsId: "github", url: "git@github.com:devmandy/golang_rest_api.git"
-
                 try {
                     currentBuild.result = 'SUCCESS'
 
