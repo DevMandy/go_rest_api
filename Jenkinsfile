@@ -12,11 +12,13 @@ def tagComment
 
 node("master") {
 
-    privateKey = env.PRIVATE_KEY
     github = new GithubModel(env)
     dockerModel = new DockerModel(env)
     tagger = new TaggerModel(env)
     tagger.setMessage(params.comment)
+}
+
+node("golang-jenkins-agent") {
 
     def isRelease = isReleaseBranchSet(params)
     def branch = isRelease ? params.releaseBranch : env.BRANCH_NAME
@@ -41,47 +43,40 @@ node("master") {
 
     def tag = isRelease ? tagger.getTag() : getSemver(branch)
 
-    def ginkgo = docker.image("${env.DOCKERHUB_ORGANIZATION}/ginkgo:latest")
-    docker.withRegistry('https://index.docker.io/v1/', "${DOCKERHUB_CREDENTIALS_ID}") {
-        ginkgo.inside {
+    stage("Run Tests") {
 
-            stage("Run Tests") {
+        echo "Run Tests"
 
-                echo "Run Tests"
+        try {
+            currentBuild.result = 'SUCCESS'
 
-                try {
-                    currentBuild.result = 'SUCCESS'
+            goTest(env)
 
-                    goTest(env)
-
-                } catch (e) {
-                    step([$class: 'JUnitResultArchiver', testResults: '**/*.xml'])
-                    echo "ERROR ${e}"
-                    slackSend channel: "${env.SLACK_CHANNEL}", color: '#FF0000', message: "Unit tests have failed for ${env.GITHUB_REPO}", token: "${SLACK_TOKEN}"
-                    currentBuild.result = 'FAILURE'
-                    throw e
-                }
-            }
-
-            stage("Build") {
-
-                echo "Build"
-
-                goBuild(env)
-            }
+        } catch (e) {
+            step([$class: 'JUnitResultArchiver', testResults: '**/*.xml'])
+            echo "ERROR ${e}"
+            slackSend channel: "${env.SLACK_CHANNEL}", color: '#FF0000', message: "Unit tests have failed for ${env.GITHUB_REPO}", token: "${SLACK_TOKEN}"
+            currentBuild.result = 'FAILURE'
+            throw e
         }
+    }
 
-        stage("Build Docker Image") {
+    stage("Build") {
 
-            echo "Build Docker Image"
+        echo "Build"
 
-            docker.withRegistry(dockerModel.getRegistry(), dockerModel.getCredentialsId()) {
-                configureBuildEnv(dockerModel)
-                dockerBuild(dockerModel, tag, "latest")
+        goBuild(env)
+    }
 
-            }
+    stage("Build Docker Image") {
+
+        echo "Build Docker Image"
+
+        docker.withRegistry(dockerModel.getRegistry(), dockerModel.getCredentialsId()) {
+            configureBuildEnv(dockerModel)
+            dockerBuild(dockerModel, tag, "latest")
+
         }
-
     }
 
     if(pushToDocker) {
