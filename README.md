@@ -1,5 +1,6 @@
 # golang_rest_api
 Test
+Another Test
 This is a reference project for creating a REST API in Go.
 
 ## Pre-Reqs
