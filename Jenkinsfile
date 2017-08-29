@@ -2,6 +2,7 @@
 @Library('jenkins-library') _
 
 env.GITHUB_REPO="golang_rest_api"
+env.DOCKER_REPO="golang_rest_api"
 env.PORT="8123"
 
 def github
