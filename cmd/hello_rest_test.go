@@ -18,7 +18,7 @@ var _ = Describe("GolangRestSeed", func() {
 	})
 
 	It("should be true", func() {
-		Expect(true).Should(BeTrue())
+		Expect(false).Should(BeTrue())
 
 	})
 
