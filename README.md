@@ -1,6 +1,8 @@
 # golang_rest_api
 This is a reference project for creating a REST API in Go.
 
+Test
+
 ## Pre-Reqs
 Make sure Go is installed and your `PATH` variable contains `%GOPATH%/bin`
 
