@@ -41,3 +41,4 @@ A ginkgo test is run by this build and produces a junit.xml file.
 golang_rest_api
 
 Test
+TestPR
