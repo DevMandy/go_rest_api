@@ -7,8 +7,8 @@ RUN apk add --update \
     bash \
 rm -rf /var/cache/apk/*
 
-RUN pwd
-RUN ls -al
+RUN echo pwd
+RUN echo ls -al
 COPY ./golang_rest_api /go/bin/
 
 CMD /go/bin/golang_rest_api
