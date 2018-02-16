@@ -14,9 +14,11 @@ pipeline {
         }
 
         stage("Push to DockerHub") {
-            docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
-                steps {
-                    sh '''docker push devmandy/go_rest_api:latest'''
+            script {
+                docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
+                    steps {
+                        sh '''docker push devmandy/go_rest_api:latest'''
+                    }
                 }
             }
         }
