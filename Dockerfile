@@ -1,19 +1,27 @@
-FROM golang:1.10.rc2-alpine37
-MAINTAINER Mandy Hubbard
+FROM golang:1.9.4-alpine3.7 AS build
+WORKDIR /go/src/github.com/devmandy/go-rest-api
+COPY service/* ./
 
-RUN echo "@edge http://dl-4.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
+RUN apk update && apk add git
 
-RUN apk add --update \
-    bash \
-rm -rf /var/cache/apk/*
+RUN go get -u github.com/onsi/ginkgo/ginkgo && go get -u github.com/onsi/gomega/...
 
-RUN pwd
-RUN ls -al
-COPY ./golang_rest_api /go/bin/
+RUN go test
+RUN go build service.go
 
-CMD /go/bin/golang_rest_api
+#Production Docker image
+FROM alpine:3.7
+WORKDIR /root/
+COPY --from=build /go/src/github.com/devmandy/go-rest-api/service .
+CMD ["./service"]
 
 EXPOSE 8123
+
+
+
+
+
+
 
 
 
