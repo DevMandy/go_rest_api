@@ -1,4 +1,4 @@
-node("master") {
+node("docker-enabled") {
     stage('Checkout') {
         checkout scm
     }
