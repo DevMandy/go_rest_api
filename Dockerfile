@@ -1,4 +1,4 @@
-FROM golang:1.9.4-alpine3.7 AS build
+FROM golang:1.11.0-alpine3.8 AS build
 WORKDIR /go/src/github.com/devmandy/go-rest-api
 COPY service/* ./
 
@@ -10,7 +10,7 @@ RUN go test
 RUN go build service.go
 
 #Production Docker image
-FROM alpine:3.7
+FROM alpine:3.8
 WORKDIR /root/
 COPY --from=build /go/src/github.com/devmandy/go-rest-api/service .
 CMD ["./service"]
