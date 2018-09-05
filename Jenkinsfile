@@ -14,6 +14,11 @@ podTemplate(name: 'super-pod', label: 'super-pod', containers: [
         container("golang") {
             stage('Test'){
                 sh '''
+                    echo "@edge http://dl-4.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
+                    apk add --update \
+                    git \
+                    rm -rf /var/cache/apk/*
+                    
                     go get github.com/onsi/ginkgo/ginkgo
                     go get github.com/onsi/gomega
                     
