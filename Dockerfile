@@ -1,5 +1,6 @@
 FROM alpine:3.8
-COPY golang_rest_api /go/bin/
+WORKDIR /usr/local/bin
+COPY service .
 
 CMD ["./service"]
 

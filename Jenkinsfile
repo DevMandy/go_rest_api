@@ -1,48 +1,51 @@
-podTemplate(name: 'super-pod', label: 'super-pod', containers: [
-        containerTemplate(name: 'golang', image: 'golang:1.9.4-alpine3.7', ttyEnabled: true, command: 'cat'),
-        containerTemplate(name: 'docker', image:'trion/jenkins-docker-client', ttyEnabled: true, command: 'cat'),
-],
-    volumes: [
-            hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
-    ])
-    {
-    node("super-pod") {
-        stage('Checkout') {
-            checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'github', url: 'git@github.com:DevMandy/go_rest_api.git']]])
+podTemplate(label: 'super-pod',
+        containers: [
+                containerTemplate(
+                        name: 'jnlp',
+                        image: 'jenkinsci/jnlp-slave:3.10-1-alpine',
+                ),
+                containerTemplate(
+                        name: 'golang',
+                        image: 'golang:1.11.0-alpine3.8',
+                        command: 'cat',
+                        ttyEnabled: true
+                ),
+                containerTemplate(
+                        name: 'docker',
+                        image: 'trion/jenkins-docker-client',
+                        command: 'cat',
+                        ttyEnabled: true
+                ),
+        ],
+        volumes: [
+                hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
+        ]
+)
+        {
+            node ('super-pod') {
 
-        }
-        container("golang") {
-            stage('Test'){
-                sh '''
-                    echo "@edge http://dl-4.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
-                    apk add --update \
-                    git 
-                    rm -rf /var/cache/apk/*
-                    
-                    go get github.com/onsi/ginkgo/ginkgo
-                    go get github.com/onsi/gomega
-                    
-                    go test
-                '''
-            }
-            stage('Build') {
-                sh '''
-                    go build 
-                '''
-            }
-        }
-        container('docker'){
-            stage('Docker Build') {
-                sh '''
-                    docker build -t devmandy/go_rest_api:latest .
-                '''
-            }
-            stage('Docker Push') {
-                docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
-                    sh '''docker push devmandy/go_rest_api:latest'''
+                stage ('Checkout') {
+                    checkout([$class: 'GitSCM', branches: [[name: '*/single-stage']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'github', url: 'git@github.com:DevMandy/go_rest_api.git']]])
+
+                }
+
+                stage ('Go Build') {
+                    container('golang') {
+                        sh '''
+		    cd service
+		    go build
+		    ls
+		'''
+                    }
+                }
+
+                stage ('Docker Build') {
+                    container('docker') {
+                        sh '''
+                ls
+                docker build -t devmandy/go_rest_api:latest .
+            '''
+                    }
                 }
             }
         }
-    }
-}
-
