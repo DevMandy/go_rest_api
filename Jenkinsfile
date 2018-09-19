@@ -25,7 +25,7 @@ podTemplate(label: 'super-pod',
             node ('super-pod') {
 
                 stage ('Checkout') {
-                    checkout([$class: 'GitSCM', branches: [[name: '*/single-stage']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'github', url: 'git@github.com:DevMandy/go_rest_api.git']]])
+                    checkout scm
 
                 }
 
